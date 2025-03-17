@@ -3,6 +3,7 @@ import boto3
 
 lambda_client = boto3.client("lambda")
 
+
 LAMBDA_FUNCTIONS = {
     "pubmed": "fulltext_pubmed_code",
     "medrxiv": "fulltext_biorxiv_code",
@@ -10,14 +11,14 @@ LAMBDA_FUNCTIONS = {
 }
 
 def lambda_handler(event, context):
-
+    """Dispatcher Lambda function to route requests based on 'source' and 'url' query parameters."""
     query_params = event.get("queryStringParameters", {})
     source = query_params.get("source")
     url = query_params.get("url")
 
     cors_headers = {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*", 
+        "Access-Control-Allow-Origin": "*",  
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type"
     }
@@ -28,6 +29,7 @@ def lambda_handler(event, context):
             "headers": cors_headers,
             "body": json.dumps({"error": "Invalid or missing 'source'. Choose from 'pubmed', 'medrxiv', 'plos'."})
         }
+
     if not url:
         return {
             "statusCode": 400,
@@ -44,14 +46,13 @@ def lambda_handler(event, context):
     }
 
     try:
-       
         response = lambda_client.invoke(**invoke_params)
         response_payload = response["Payload"].read().decode("utf-8")
 
         return {
             "statusCode": response["StatusCode"],
-            "headers": cors_headers,  
-            "body": response_payload 
+            "headers": cors_headers, 
+            "body": response_payload  
         }
 
     except Exception as e:
